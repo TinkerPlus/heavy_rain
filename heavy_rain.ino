@@ -1,23 +1,34 @@
+#include <Arduino.h>
+#include <IRremoteESP8266.h>
+#include <IRsend.h>
+
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+
 #include <OSCMessage.h>
 #include <OSCBundle.h>
 
 char ssid[] = "PiFi";
 char pass[] = "pifi@7002";
 
-const int btnPin = D3;                 // D3 pin at WeMos Di mini
-const int ledPin = D4;                 // D4 pin at WeMos Di mini BUILDIN_LED
+#define btnPin D3                 // D3 pin at WeMos Di mini
+#define ledPin D4                 // D4 pin at WeMos Di mini BUILDIN_LED
+#define IR_LED D2
+
+IRsend irsend(IR_LED);  // Set the GPIO to be used to sending the message.
 
 WiFiUDP Udp;                           // A UDP instance to let us send and receive packets over UDP
-IPAddress destIp(192,168,1,238);   // remote IP of the target device
-const unsigned int destPort = 9999;    // remote port of the target device where the NodeMCU sends OSC to
+IPAddress destIp(192,168,1,255);   // remote IP of the target device
+const unsigned int destPort = 8888;    // remote port of the target device where the NodeMCU sends OSC to
 const unsigned int localPort = 8888;   // local port to listen for UDP packets at the NodeMCU (another device must send OSC messages to this port)
 
 
 void setup() {
   Serial.begin(115200);
-  WiFi.config(IPAddress(192,168,1,218),IPAddress(192,168,1,1), IPAddress(255,255,255,0)); 
+  
+  irsend.begin();
+  
+  WiFi.config(IPAddress(192,168,1,219),IPAddress(192,168,1,1), IPAddress(255,255,255,0)); 
   // Connect to WiFi network
   Serial.println();
   Serial.print("Connecting to ");
@@ -37,43 +48,30 @@ void setup() {
   Serial.print("Local port: ");
   Serial.println(Udp.localPort());
 
-  pinMode(btnPin, INPUT);
   pinMode(ledPin, OUTPUT);
+  attachInterrupt(digitalPinToInterrupt(btnPin), btnIntCallBack, FALLING);
+}
 
+void btnIntCallBack(){
+  Serial.println("Key Pressed");
+  //irsend.sendNEC(0xFFB04F, 32);
+  digitalWrite(ledPin, LOW);
+  sendOSC();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  sendOSC();
   receiveOSC();
 }
 
-void sendTo(IPAddress targetIP, OSCMessage msg){
-  Udp.beginPacket(targetIP,destPort);
-  msg.send(Udp);
-  Udp.endPacket();
-  msg.empty();
-}
-
 void sendOSC(){
-  // control the led
-  int btnVal = digitalRead(btnPin);
-  if (btnVal == 0){ //default btnPin is Pull-Up, the value is 1
-    digitalWrite(ledPin, HIGH); // open the led
-    // prepare the message
     OSCMessage msgOut("/color");
-    msgOut.add(1);
+    msgOut.add(0);
     // send via udp
     Udp.beginPacket(destIp, destPort);
     msgOut.send(Udp);
     Udp.endPacket();
     msgOut.empty();
-  }
-  else{
-    digitalWrite(ledPin, LOW);
-  }
-  
-  delay(100);
 }
 
 void receiveOSC(){
