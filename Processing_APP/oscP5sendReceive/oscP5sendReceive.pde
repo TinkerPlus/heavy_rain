@@ -8,14 +8,16 @@ import oscP5.*;
 import netP5.*;
   
 OscP5 oscP5;
-NetAddress myRemoteLocation216;
+NetAddress myRemoteLocation255;
 NetAddress myRemoteLocation217;
+//NetAddress myRemoteLocation218;
+NetAddress myRemoteLocation219;
 
 void setup() {
   size(400,400);
   frameRate(25);
   /* start oscP5, listening for incoming messages at port 12000 */
-  oscP5 = new OscP5(this,9999);
+  oscP5 = new OscP5(this,8888);
   
   /* myRemoteLocation is a NetAddress. a NetAddress takes 2 parameters,
    * an ip address and a port number. myRemoteLocation is used as parameter in
@@ -24,8 +26,10 @@ void setup() {
    * and the port of the remote location address are the same, hence you will
    * send messages back to this sketch.
    */
-  myRemoteLocation216 = new NetAddress("192.168.1.216",8888);
+  myRemoteLocation255 = new NetAddress("192.168.1.255",8888);
   myRemoteLocation217 = new NetAddress("192.168.1.217",8888);
+  //myRemoteLocation218 = new NetAddress("192.168.1.218",8888);
+  myRemoteLocation219 = new NetAddress("192.168.1.219",8888);
 }
 
 
@@ -38,12 +42,14 @@ void mousePressed() {
   /* in the following different ways of creating osc messages are shown by example */
   OscMessage myMessage = new OscMessage("/color");
   //OscMessage myMessage1 = new OscMessage("/color");
-  
-  if(mouseX < 200) myMessage.add(1); /* add an int to the osc message */
-  else myMessage.add(0);
+  int colorCode = int(random(7));
+  if(mouseX < 200) myMessage.add(0).add(0).add(238); /* add an int to the osc message */
+  else myMessage.add(1).add(colorCode).add(238);
   /* send the message */
-  oscP5.send(myMessage, myRemoteLocation216); 
-  oscP5.send(myMessage, myRemoteLocation217);
+  //oscP5.send(myMessage, myRemoteLocation255); 
+  oscP5.send(myMessage, myRemoteLocation219);
+  //oscP5.send(myMessage, myRemoteLocation218);
+  //oscP5.send(myMessage, myRemoteLocation219);
 }
 
 
