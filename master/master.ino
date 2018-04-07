@@ -20,7 +20,7 @@ WiFiUDP Udp;
 
 
 // ID
-const unsigned int ID = 219;                      // Board ID
+const unsigned int ID = 238;                      // Board ID
 const unsigned int LISTEN_PORT = 8888;            // no need to change
 
 // color setting
@@ -33,7 +33,9 @@ int ledState = -1;
 unsigned int sourceID = 0;
 unsigned int colorCode = 0;
 
+// delay interval
 
+const unsigned int INTERVAL = 1000;
 
 
 /*  *****************************************************************************************
@@ -113,14 +115,19 @@ void colorEvent(OSCMessage &msg, int addrOffset){
   Serial.print("message from: ");
   Serial.println(sourceID);
 
+  delay(INTERVAL);
   switch (sourceID){
-    case 100:{
+    case 218:{
       // light lamps around 100
-      int targetIDList[2][21] = {
-                                  { 101,106,107,102,112,108,113,114},
-                                  { 103,109,115,121,118,119,120,
-                                    104,110,116,122,128,127,126,
-                                    124,125,105,111,117,123,129 }
+//      int targetIDList[2][21] = {
+//                                  { 101,106,107,102,112,108,113,114},
+//                                  { 103,109,115,121,118,119,120,
+//                                    104,110,116,122,128,127,126,
+//                                    124,125,105,111,117,123,129 }
+//                                 };
+      int targetIDList[2][2] = {
+                                  { 217, 219},
+                                  { 221 }
                                  };
       for (int i=0; i<2; i++){
         for (int j=0; j<21; j++){
@@ -128,31 +135,27 @@ void colorEvent(OSCMessage &msg, int addrOffset){
           sendOSCTo(targetIDList[i][j], ledState, colorCode, ID);
           delay(10); 
         }
-        delay(1000);
+        delay(INTERVAL);
       }
       break;
     }
-    case 101:{
+
+    case 219:{
       // light lamps around 100
-      int targetIDList[2][21] = {   //wait for change
-                                  { 101,106,107,102,112,108,113,114},
-                                  { 103,109,115,121,118,119,120,
-                                    104,110,116,122,128,127,126,
-                                    124,125,105,111,117,123,129 }
+      int targetIDList[2][2] = {   
+                                  { 218, 220},
+                                  { 217 }
                                  };
       for (int i=0; i<2; i++){
-        for (int j=0; j<21; j++){
+        for (int j=0; j<2; j++){
           //void sendOSCTo(int targetID, int ledState, unsigned int colorCode, int sourceID)
           sendOSCTo(targetIDList[i][j], ledState, colorCode, ID);
           delay(10); 
         }
-        delay(1000);
+        delay(INTERVAL);
       }
       break;
     }
-      
-      
-      
   }
 }
 
