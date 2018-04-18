@@ -37,9 +37,20 @@ char pass[] = "pifi@7002";
 
 // WiFiUDP 
 WiFiUDP Udp;
- 
-// ID
-const unsigned int ID = 228;                      // Board ID
+
+// Target ID list
+int targetIDList[9][9] = {
+                                  { 203, 209},
+                                  { 202, 208, 214}, 
+                                  { 201, 207, 213, 219},
+                                  { 200, 206, 212, 218, 224},
+                                  { 205, 211, 217, 223, 229},
+                                  { 210, 216, 222, 228},
+                                  { 215, 221, 227},
+                                  { 220, 226},
+                                  { 225}
+                                 };
+const unsigned int ID = 204;                      // Board ID
 const unsigned int MASTER_ID = 199;               // Master ID
 const unsigned int LISTEN_PORT = 8888;            // no need to change
 
@@ -51,15 +62,7 @@ const unsigned int COLOR_COUNTS = 7;
 unsigned int colorList[COLOR_COUNTS] = {0xFF629D, 0xFF6897, 0xFF9867, 0xFFB04F, 0xFF5AA5, 0xFF42BD, 0xFF4AB5};
 unsigned int colorCode = 0;
 
-
-
-// for non-master version
-//IPAddress IPlist[3][2] = {
-//                              {IPAddress(192,168,1,216),IPAddress(192,168,1,218)},
-//                              {IPAddress(192,168,1,217)},
-//                              {IPAddress(192,168,1,238)}
-//                           };
-//                            
+                       
 
 /*  *****************************************************************************************
  *  Functions Area
@@ -112,11 +115,13 @@ void setup() {
 
 
 void loop() {
+  
+  int ledState = 0;
   // if button pressed, send message
   if(isBtnPressed()){
     Serial.println("button pressed");
     digitalWrite(ledPin, LOW);              //open built-in led for debug
-    
+    ledState = 1;
     colorCode = getRandomColorCode();   // generate random color code
     
     Serial.print("color code: ");
@@ -126,9 +131,25 @@ void loop() {
       irsend.sendNEC(color, 32);              // set the value via ir, change the lamp's color 
       delay(50); 
     }
-    sendOSCTo(MASTER_ID, 0, colorCode, ID);       // sendOSC to master
-  }
+
+    for (int i=0; i<9; i++){
+        for (int j=0; j<9; j++){
+          //void sendOSCTo(int targetID, int ledState, unsigned int colorCode, int sourceID)
+          for (int times=0; times<3; times++){
+            sendOSCTo(targetIDList[i][j], ledState, colorCode, ID);  
+            delay(10); 
+          }
+        }
+        delay(500);
+    }
+
+   int size;
+   while((size = Udp.parsePacket()) >0){
+      while(size--)
+        Udp.read();
+   }
   //listen to master call
+  }
   receiveOSC();
 }
 
@@ -145,8 +166,6 @@ void sendOSCTo(int targetID, int ledState, unsigned int colorCode, int sourceID)
     msgOut.send(Udp);
     Udp.endPacket();
     msgOut.empty();
-
-
 }
 
 void receiveOSC(){
@@ -200,6 +219,7 @@ bool isBtnPressed(){
   if(digitalRead(btnPin) == 0){
     delay(100);
     if(digitalRead(btnPin) == 1){
+      //digitalWrite(btnPin, HIGH);
       return 1;
     }
   }
